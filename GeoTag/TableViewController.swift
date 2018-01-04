@@ -481,6 +481,11 @@ extension TableViewController: NSTableViewDelegate {
                 if let lon = image.longitude {
                     value = String(format: "% 2.6f", lon)
                 }
+            case NSUserInterfaceItemIdentifier("tags"):
+                value = image.tagsAsString
+                if !value.isEmpty {
+                    appDelegate.modified = true
+                }
             default:
                 break
             }

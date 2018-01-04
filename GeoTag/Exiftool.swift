@@ -83,4 +83,22 @@ struct Exiftool {
         exiftool.waitUntilExit()
         return exiftool.terminationStatus
     }
+    
+    func updateKeywords(from imageData: ImageData) -> Int32 {
+        if imageData.tags.count == 0 {return 0}
+        
+        var keywordsArg = "-sep \", \" -Keywords="
+        keywordsArg += imageData.tagsAsString
+        
+        let exiftool = Process()
+        exiftool.standardOutput = FileHandle.nullDevice
+        exiftool.standardError = FileHandle.nullDevice
+        exiftool.launchPath = url.path
+        exiftool.arguments = ["-q", "-m", "-overwrite_original_in_place",
+                              "-DateTimeOriginal>FileModifyDate",
+                              keywordsArg, imageData.sandboxUrl.path]
+        exiftool.launch()
+        exiftool.waitUntilExit()
+        return exiftool.terminationStatus
+    }
 }

@@ -79,6 +79,7 @@ final class ImageData: NSObject {
     var longitude: Double?, originalLongitude: Double?
     var validImage = false
     lazy var image: NSImage = self.loadImage()
+    var tags: [String] = []
 
     // return the string representation of the location of an image for copy
     // and paste.
@@ -87,6 +88,11 @@ final class ImageData: NSObject {
             return "\(latitude!) \(longitude!)"
         }
         return ""
+    }
+    
+    var tagsAsString: String {
+        guard self.tags.count > 0 else {return ""}
+        return self.tags.joined(separator: ", ")
     }
 
     // MARK: Init
@@ -217,9 +223,10 @@ final class ImageData: NSObject {
     /// exiftool does its job.
     func saveImageFile() -> Bool {
         if validImage &&
-           (latitude != originalLatitude || longitude != originalLongitude) {
+            (latitude != originalLatitude || longitude != originalLongitude || self.tags.count > 0) {
             if saveOriginalFile() &&
-               Exiftool.helper.updateLocation(from: self) == 0 {
+                Exiftool.helper.updateLocation(from: self) == 0 &&
+                Exiftool.helper.updateKeywords(from: self) == 0 {
                 originalLatitude = latitude
                 originalLongitude = longitude
                 return true
@@ -285,6 +292,23 @@ final class ImageData: NSObject {
                 }
             }
         }
+        
+        //read macOS file tags
+        do {
+            let values = try [self.url.resourceValues(forKeys: [URLResourceKey.tagNamesKey])]
+            var tagsArray: [String] = []
+            for value in values {
+                if let array = value.tagNames {
+                    tagsArray.append(contentsOf:array)
+                }
+            }
+            
+            self.tags = tagsArray
+        }
+        catch {
+            print("Failed to get tags for \(self.url) with error \(error)")
+        }
+
         return true
     }
 
